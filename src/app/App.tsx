@@ -96,11 +96,11 @@ const categoryData = [
 ];
 
 const statusMeta: Record<OrderStatus, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
-  pending:    { label: "Pending",    bg: "bg-amber-50",  text: "text-amber-700",  icon: <Clock size={12} /> },
-  processing: { label: "Processing", bg: "bg-blue-50",   text: "text-blue-700",   icon: <Sparkles size={12} /> },
-  shipped:    { label: "Shipped",    bg: "bg-purple-50", text: "text-purple-700", icon: <Truck size={12} /> },
-  delivered:  { label: "Delivered",  bg: "bg-green-50",  text: "text-green-700",  icon: <CheckCircle2 size={12} /> },
-  cancelled:  { label: "Cancelled",  bg: "bg-red-50",    text: "text-red-600",    icon: <X size={12} /> },
+  pending: { label: "Pending", bg: "bg-amber-50", text: "text-amber-700", icon: <Clock size={12} /> },
+  processing: { label: "Processing", bg: "bg-blue-50", text: "text-blue-700", icon: <Sparkles size={12} /> },
+  shipped: { label: "Shipped", bg: "bg-purple-50", text: "text-purple-700", icon: <Truck size={12} /> },
+  delivered: { label: "Delivered", bg: "bg-green-50", text: "text-green-700", icon: <CheckCircle2 size={12} /> },
+  cancelled: { label: "Cancelled", bg: "bg-red-50", text: "text-red-600", icon: <X size={12} /> },
 };
 
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
@@ -108,13 +108,13 @@ const statusMeta: Record<OrderStatus, { label: string; bg: string; text: string;
 export default function App() {
   const [page, setPage] = useState<Page>("dashboard");
   const [products, setProducts] = useState<Product[]>(seedProducts);
-  const [orders, setOrders]     = useState<Order[]>(seedOrders);
+  const [orders, setOrders] = useState<Order[]>(seedOrders);
   const [messages, setMessages] = useState<Message[]>(seedMessages);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const totalRevenue = orders.filter(o => o.status !== "cancelled").reduce((s, o) => s + o.total, 0);
   const pendingCount = orders.filter(o => o.status === "pending").length;
-  const totalUnread  = messages.reduce((s, m) => s + m.unread, 0);
+  const totalUnread = messages.reduce((s, m) => s + m.unread, 0);
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "var(--background)", fontFamily: "'DM Sans', sans-serif" }}>
@@ -169,11 +169,11 @@ function Sidebar({ page, setPage, open, pendingCount, totalUnread }: {
   open: boolean; pendingCount: number; totalUnread: number;
 }) {
   const nav = [
-    { id: "dashboard", label: "Dashboard",  icon: LayoutDashboard, badge: 0 },
-    { id: "products",  label: "Products",   icon: Package,         badge: 0 },
-    { id: "orders",    label: "Orders",     icon: ShoppingBag,     badge: pendingCount },
-    { id: "chat",      label: "Messages",   icon: MessageCircle,   badge: totalUnread },
-    { id: "settings",  label: "Settings",   icon: Settings,        badge: 0 },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, badge: 0 },
+    { id: "products", label: "Products", icon: Package, badge: 0 },
+    { id: "orders", label: "Orders", icon: ShoppingBag, badge: pendingCount },
+    { id: "chat", label: "Messages", icon: MessageCircle, badge: totalUnread },
+    { id: "settings", label: "Settings", icon: Settings, badge: 0 },
   ] as const;
 
   return (
@@ -289,10 +289,10 @@ function DashboardPage({ products, orders, totalRevenue, pendingCount, onViewOrd
   const lowStock = products.filter(p => p.stock > 0 && p.stock < 5).length;
 
   const stats = [
-    { label: "Total Revenue",   value: `$${totalRevenue.toLocaleString()}`, sub: "+12% this month",  icon: DollarSign, up: true  },
-    { label: "Orders",          value: orders.length,                        sub: `${pendingCount} pending`, icon: ShoppingBag, up: true  },
-    { label: "Active Products", value: activeProducts,                       sub: `${lowStock} low stock`,   icon: Package,     up: false },
-    { label: "Customers",       value: 142,                                  sub: "+8 this week",    icon: Users,       up: true  },
+    { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, sub: "+12% this month", icon: DollarSign, up: true },
+    { label: "Orders", value: orders.length, sub: `${pendingCount} pending`, icon: ShoppingBag, up: true },
+    { label: "Active Products", value: activeProducts, sub: `${lowStock} low stock`, icon: Package, up: false },
+    { label: "Customers", value: 142, sub: "+8 this week", icon: Users, up: true },
   ];
 
   const recent = orders.slice(0, 5);
@@ -336,7 +336,7 @@ function DashboardPage({ products, orders, totalRevenue, pendingCount, onViewOrd
             <AreaChart data={salesData}>
               <defs>
                 <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#8c4b2f" stopOpacity={0.2} />
+                  <stop offset="5%" stopColor="#8c4b2f" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#8c4b2f" stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -596,41 +596,41 @@ function ProductModal({ product, onSave, onClose }: { product: Product | null; o
             <img src={form.image} alt="preview" className="w-full h-40 object-cover rounded-2xl" />
           )}
           <Field label="Product Name">
-            <input value={form.name} onChange={e => setForm({...form, name: e.target.value})}
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Chunky Knit Tote Bag" className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Category">
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
                 className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                 style={{ background: "var(--secondary)", color: "var(--foreground)" }}>
                 {cats.map(c => <option key={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="Price ($)">
-              <input type="number" value={form.price} onChange={e => setForm({...form, price: +e.target.value})}
+              <input type="number" value={form.price} onChange={e => setForm({ ...form, price: +e.target.value })}
                 className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                 style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
             </Field>
           </div>
           <Field label="Stock Quantity">
-            <input type="number" value={form.stock} onChange={e => setForm({...form, stock: +e.target.value})}
+            <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: +e.target.value })}
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
           </Field>
           <Field label="Image URL">
-            <input value={form.image} onChange={e => setForm({...form, image: e.target.value})}
+            <input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })}
               placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
           </Field>
           <Field label="Colors (comma-separated)">
-            <input value={form.colors} onChange={e => setForm({...form, colors: e.target.value})}
+            <input value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })}
               placeholder="Natural, Dusty Rose, Sage" className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
           </Field>
           <Field label="Description">
-            <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})}
+            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
               rows={3} placeholder="Describe this handmade item..."
               className="w-full px-3 py-2.5 rounded-xl text-sm outline-none resize-none"
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
@@ -782,10 +782,10 @@ function OrdersPage({ orders, setOrders }: { orders: Order[]; setOrders: (o: Ord
               <div>
                 <p className="text-xs font-semibold mb-2" style={{ color: "var(--foreground)" }}>Update Status</p>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {(["pending","processing","shipped","delivered","cancelled"] as OrderStatus[]).map(s => (
+                  {(["pending", "processing", "shipped", "delivered", "cancelled"] as OrderStatus[]).map(s => (
                     <button key={s} onClick={() => updateStatus(selected.id, s)}
                       className={`px-2 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1 justify-center transition-all ${statusMeta[s].bg} ${statusMeta[s].text} ${selected.status === s ? "ring-2 ring-offset-1" : "opacity-70 hover:opacity-100"}`}
-                      style={selected.status === s ? { ringColor: "var(--primary)" } : {}}>
+                      style={selected.status === s ? { outlineColor: "var(--primary)" } : {}}>
                       {statusMeta[s].icon}{statusMeta[s].label}
                     </button>
                   ))}
@@ -955,33 +955,33 @@ function SettingsPage() {
     {
       title: "Store Information",
       fields: [
-        { key: "storeName",  label: "Store Name",    type: "text" },
-        { key: "email",      label: "Contact Email", type: "email" },
-        { key: "phone",      label: "Phone Number",  type: "tel" },
-        { key: "address",    label: "Address",       type: "text" },
+        { key: "storeName", label: "Store Name", type: "text" },
+        { key: "email", label: "Contact Email", type: "email" },
+        { key: "phone", label: "Phone Number", type: "tel" },
+        { key: "address", label: "Address", type: "text" },
       ],
     },
     {
       title: "Pricing & Shipping",
       fields: [
-        { key: "currency",               label: "Currency",                   type: "text" },
-        { key: "shippingFee",            label: "Default Shipping Fee ($)",   type: "number" },
-        { key: "freeShippingThreshold",  label: "Free Shipping Above ($)",    type: "number" },
+        { key: "currency", label: "Currency", type: "text" },
+        { key: "shippingFee", label: "Default Shipping Fee ($)", type: "number" },
+        { key: "freeShippingThreshold", label: "Free Shipping Above ($)", type: "number" },
       ],
     },
     {
       title: "Social & Marketing",
       fields: [
         { key: "instagramHandle", label: "Instagram Handle", type: "text" },
-        { key: "telegramHandle",  label: "Telegram Handle",  type: "text" },
-        { key: "fbPixelId",       label: "Facebook Pixel ID", type: "text" },
+        { key: "telegramHandle", label: "Telegram Handle", type: "text" },
+        { key: "fbPixelId", label: "Facebook Pixel ID", type: "text" },
       ],
     },
     {
       title: "Integrations",
       fields: [
         { key: "firestoreProjectId", label: "Firebase Project ID", type: "text" },
-        { key: "vercelProjectId",    label: "Vercel Project ID",   type: "text" },
+        { key: "vercelProjectId", label: "Vercel Project ID", type: "text" },
       ],
     },
   ];
