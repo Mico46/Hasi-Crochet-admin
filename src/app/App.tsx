@@ -885,7 +885,7 @@ function ProductModal({ product, onSave, onClose }: { product: Product | null; o
           </Field>
           <Field label="Image URL">
 
-            {!previewUrl ? <Input className="w-1/2" type="file" ref={fileInputRef} onChange={handleFileChange} placeholder="File" /> :
+            {!form.image ? <Input className="w-1/2" type="file" ref={fileInputRef} onChange={handleFileChange} placeholder="File" /> :
               <div className="flex items-center gap-2">
                 <input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })}
                   placeholder={form.image} className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
