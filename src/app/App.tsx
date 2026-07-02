@@ -17,6 +17,7 @@ import { db } from "../firebase";
 import { upload } from '@vercel/blob/client';
 import { PutBlobResult, put } from '@vercel/blob';
 import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
 
 
 
@@ -221,122 +222,7 @@ export default function App() {
   );
 }
 
-function UploadImagesPage() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [uploadedBlob, setUploadedBlob] = useState<PutBlobResult | null>(null);
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<string>('');
-  const token = "vercel_blob_rw_VT1xwU6xbk4JCePp_Z9vMfxOvxeZooBPQT4xzdK8Av8EWfk";
-  // Handle local browsing and image preview
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setPreviewUrl(URL.createObjectURL(file));
-      setUploadedBlob(null);
-      setStatusMessage('');
-    } else {
-      setStatusMessage('⚠️ Please select a valid image file.');
-    }
-  };
-  // Handle server upload via API
-  const handleUpload = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault();
 
-    if (!fileInputRef.current?.files || fileInputRef.current.files.length === 0) {
-      setStatusMessage('❌ Please select an image first.');
-      return;
-    }
-
-    const file = fileInputRef.current.files[0];
-    setIsUploading(true);
-    setStatusMessage('Uploading directly to Vercel Blob...');
-
-    try {
-      // Direct client upload via the SDK
-      const newBlob = await upload(file.name, file, {
-        access: 'public',
-        // Points to the authorization endpoint where your BLOB_READ_WRITE_TOKEN is safely used
-        handleUploadUrl: '/api/uploads',
-      });
-
-
-
-
-      setUploadedBlob(newBlob);
-      setStatusMessage('✅ Upload complete!');
-    } catch (error) {
-
-      alert('Vercel Blob Upload error: ' + error);
-      setStatusMessage('❌ Upload failed. Security authorization error.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  return (
-    <div style={{ maxWidth: '450px', margin: '40px auto', fontFamily: 'system-ui, sans-serif' }}>
-      <h3>Vercel Blob Image Upload</h3>
-
-      <form onSubmit={handleUpload}>
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          disabled={isUploading}
-          style={{ marginBottom: '15px', display: 'block', borderWidth: 2 }}
-
-        />
-
-        {previewUrl && !uploadedBlob && (
-          <div style={{ margin: '10px 0' }}>
-            <p style={{ fontSize: '14px', color: '#666' }}>Selected Preview:</p>
-            <img src={previewUrl} alt="Preview" style={{ width: '100%', borderRadius: '6px' }} />
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={isUploading}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#000',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isUploading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {isUploading ? 'Uploading...' : 'Upload File'}
-        </button>
-      </form>
-
-      {statusMessage && <p style={{ marginTop: '15px', fontSize: '14px' }}>{statusMessage}</p>}
-
-      {/* Resulting URL block returned from Vercel */}
-      {uploadedBlob && (
-        <div style={{ marginTop: '20px', padding: '15px', background: '#f4f4f4', borderRadius: '6px' }}>
-          <p style={{ color: 'green', margin: '0 0 10px 0' }}>🎉 Link Generated Successfully!</p>
-          <a
-            href={uploadedBlob.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ wordBreak: 'break-all', color: '#0066cc', fontWeight: 'bold' }}
-          >
-            {uploadedBlob.url}
-          </a>
-        </div>
-      )}
-
-      <Button
-        variant='outline'
-        size="lg"> Click</Button>
-    </div>
-
-  );
-
-}
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 
@@ -654,6 +540,7 @@ function ProductsPage({ products, setProducts }: { products: Product[]; setProdu
   }
   async function saveProduct(data: Partial<Product>) {
     if (modal === "add") {
+      // alert("data" + data.image);
       await addDoc(collection(db, "products"), data);
     } else if (modal && typeof modal === "object") {
       if (data.id) {
@@ -759,7 +646,154 @@ function ProductsPage({ products, setProducts }: { products: Product[]; setProdu
     </div>
   );
 }
+function UploadImagesPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploadedBlob, setUploadedBlob] = useState<PutBlobResult | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const token = "vercel_blob_rw_VT1xwU6xbk4JCePp_Z9vMfxOvxeZooBPQT4xzdK8Av8EWfk";
+  // Handle local browsing and image preview
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
 
+      setUploadedBlob(null);
+      try {
+        const newBlob = await upload(file.name, file, {
+          access: 'public',
+          // Points to the authorization endpoint where your BLOB_READ_WRITE_TOKEN is safely used
+          handleUploadUrl: '/api/uploads',
+        });
+        setUploadedBlob(newBlob);
+      }
+      catch (error) {
+        alert("Error: " + error);
+      }
+
+      // setStatusMessage('');
+    } else {
+      setStatusMessage('⚠️ Please select a valid image file.');
+    }
+
+    //const file = fileInputRef.current.files[0];
+
+  };
+
+  // Handle server upload via API
+  const handleUpload = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+
+    if (!fileInputRef.current?.files || fileInputRef.current.files.length === 0) {
+      setStatusMessage('❌ Please select an image first.');
+      return;
+    }
+
+    const file = fileInputRef.current.files[0];
+    setIsUploading(true);
+    setStatusMessage('Uploading directly to Vercel Blob...');
+
+    try {
+      // Direct client upload via the SDK
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        // Points to the authorization endpoint where your BLOB_READ_WRITE_TOKEN is safely used
+        handleUploadUrl: '/api/uploads',
+      });
+
+
+
+
+      setUploadedBlob(newBlob);
+      setStatusMessage('✅ Upload complete!');
+    } catch (error) {
+
+      alert('Vercel Blob Upload error: ' + error);
+      setStatusMessage('❌ Upload failed. Security authorization error.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <input className="p-4 rounded-lg bg-white/90 hover:bg-white transition-colors" type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} disabled={isUploading} />
+        {previewUrl ? <img className="w-40 h-40" src={previewUrl} alt="Preview" />
+          : <button onClick={() => handleFileChange} className="p-4 rounded-lg bg-white/90 hover:bg-white transition-colors"><Plus size={20} style={{ color: "var(--primary)" }} /></button>}
+
+        {uploadedBlob && <p>{uploadedBlob.url}</p>}
+      </div>
+
+    </div>
+
+  );
+
+  {/* 
+      <div style={{ maxWidth: '450px', margin: '40px auto', fontFamily: 'system-ui, sans-serif' }}>
+      <h3>Vercel Blob Image Upload</h3>
+
+      <form onSubmit={handleUpload}>
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          disabled={isUploading}
+          style={{ marginBottom: '15px', display: 'block', borderWidth: 2 }}
+
+        />
+
+        {previewUrl && !uploadedBlob && (
+          <div style={{ margin: '10px 0' }}>
+            <p style={{ fontSize: '14px', color: '#666' }}>Selected Preview:</p>
+            <img src={previewUrl} alt="Preview" style={{ width: '100%', borderRadius: '6px' }} />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isUploading}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#000',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isUploading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isUploading ? 'Uploading...' : 'Upload File'}
+        </button>
+      </form>
+
+      {statusMessage && <p style={{ marginTop: '15px', fontSize: '14px' }}>{statusMessage}</p>}
+
+      {/* Resulting URL block returned from Vercel 
+      {uploadedBlob && (
+        <div style={{ marginTop: '20px', padding: '15px', background: '#f4f4f4', borderRadius: '6px' }}>
+          <p style={{ color: 'green', margin: '0 0 10px 0' }}>🎉 Link Generated Successfully!</p>
+          <a
+            href={uploadedBlob.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ wordBreak: 'break-all', color: '#0066cc', fontWeight: 'bold' }}
+          >
+            {uploadedBlob.url}
+          </a>
+        </div>
+      )}
+
+      <Button
+        variant='outline'
+        size="lg"> Click</Button>
+    </div> */}
+
+
+  // );
+
+}
 function ProductModal({ product, onSave, onClose }: { product: Product | null; onSave: (d: Partial<Product>) => void; onClose: () => void }) {
   const [form, setForm] = useState({
     id: product?.id ?? "",
@@ -771,6 +805,41 @@ function ProductModal({ product, onSave, onClose }: { product: Product | null; o
     image: product?.image ?? "",
     colors: product?.colors.join(", ") ?? "",
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploadedBlob, setUploadedBlob] = useState<PutBlobResult | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string>('');
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
+      //setForm({ ...form, image: previewUrl });
+      //setForm({ ...form, image: URL.createObjectURL(file) });
+      setUploadedBlob(null);
+      try {
+        const newBlob = await upload(file.name, file, {
+          access: 'public',
+          // Points to the authorization endpoint where your BLOB_READ_WRITE_TOKEN is safely used
+          handleUploadUrl: '/api/uploads',
+        });
+        setForm({ ...form, image: newBlob.url });
+        setUploadedBlob(newBlob);
+      }
+      catch (error) {
+        alert("Error: " + error);
+      }
+
+      // setStatusMessage('');
+    } else {
+      setStatusMessage('⚠️ Please select a valid image file.');
+    }
+
+    //const file = fileInputRef.current.files[0];
+
+  };
 
   const cats = ["Bags", "Clothing", "Home", "Decor", "Accessories", "Supplies"];
 
@@ -815,10 +884,23 @@ function ProductModal({ product, onSave, onClose }: { product: Product | null; o
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
           </Field>
           <Field label="Image URL">
+
+            {!previewUrl ? <Input className="w-1/2" type="file" ref={fileInputRef} onChange={handleFileChange} placeholder="File" /> :
+              <div className="flex items-center gap-2">
+                <input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })}
+                  placeholder={form.image} className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
+                <Button onClick={() => { setForm({ ...form, image: '' }); setPreviewUrl(''); }} className="mt-2">Remove</Button>
+              </div>
+            }
+          </Field>
+          {/* <Field label="">
+
+            {form.image && <img src={form.image} alt="preview" className="w-30 h-30 object-cover rounded-2xl" />}
             <input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })}
               placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
               style={{ background: "var(--secondary)", color: "var(--foreground)" }} />
-          </Field>
+          </Field> */}
           <Field label="Colors (comma-separated)">
             <input value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })}
               placeholder="Natural, Dusty Rose, Sage" className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
