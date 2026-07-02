@@ -17,7 +17,7 @@ import { db } from "../firebase";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
-type Page = "dashboard" | "products" | "orders" | "chat" | "settings";
+type Page = "dashboard" | "products" | "orders" | "chat" | "settings" | "logout";
 type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 
 interface Product {
@@ -226,6 +226,7 @@ function Sidebar({ page, setPage, open, pendingCount, totalUnread }: {
     { id: "orders", label: "Orders", icon: ShoppingBag, badge: pendingCount },
     { id: "chat", label: "Messages", icon: MessageCircle, badge: totalUnread },
     { id: "settings", label: "Settings", icon: Settings, badge: 0 },
+    { id: "logout", label: "Logout", icon: LogOut, badge: 0 },
   ] as const;
 
   return (
@@ -303,6 +304,7 @@ function Sidebar({ page, setPage, open, pendingCount, totalUnread }: {
 function TopBar({ page, onMenuClick, totalUnread }: { page: Page; onMenuClick: () => void; totalUnread: number }) {
   const titles: Record<Page, string> = {
     dashboard: "Dashboard", products: "Products", orders: "Orders", chat: "Messages", settings: "Settings",
+    logout: "Logout"
   };
   return (
     <header
