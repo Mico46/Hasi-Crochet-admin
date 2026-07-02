@@ -11,6 +11,9 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
+import { collection, onSnapshot, addDoc, getDocs, updateDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase";
+
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -107,14 +110,60 @@ const statusMeta: Record<OrderStatus, { label: string; bg: string; text: string;
 
 export default function App() {
   const [page, setPage] = useState<Page>("dashboard");
-  const [products, setProducts] = useState<Product[]>(seedProducts);
-  const [orders, setOrders] = useState<Order[]>(seedOrders);
-  const [messages, setMessages] = useState<Message[]>(seedMessages);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const totalRevenue = orders.filter(o => o.status !== "cancelled").reduce((s, o) => s + o.total, 0);
   const pendingCount = orders.filter(o => o.status === "pending").length;
   const totalUnread = messages.reduce((s, m) => s + m.unread, 0);
+
+  useEffect(() => {
+
+    const unsub = onSnapshot(collection(db, "products"), snap => {
+      setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
+    });
+    const ordUnsub = onSnapshot(collection(db, "orders"), snap => {
+      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+    });
+    const msgUnsub = onSnapshot(collection(db, "messages"), snap => {
+      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
+    });
+
+
+    return (() => {
+      unsub();
+      ordUnsub();
+      msgUnsub();
+    });
+  }, []);
+
+  /* useEffect(() => {
+    const ordUnsub = onSnapshot(collection(db, "orders"), snap => {
+      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+    });
+
+    return ordUnsub;
+  }, []); */
+
+
+
+  /*  useEffect(() => {
+     const msgUnsub = onSnapshot(collection(db, "messages"), snap => {
+       setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
+     });
+     return msgUnsub;
+   }, []); */
+  function addMessage() {
+
+    addDoc(collection(db, "messages"), seedMessages[0]);
+    addDoc(collection(db, "messages"), seedMessages[1]);
+    addDoc(collection(db, "messages"), seedMessages[2]);
+    addDoc(collection(db, "messages"), seedMessages[3]);
+    addDoc(collection(db, "messages"), seedMessages[4]);
+    alert("Messages added successfully");
+  }
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "var(--background)", fontFamily: "'DM Sans', sans-serif" }}>
@@ -145,7 +194,10 @@ export default function App() {
               pendingCount={pendingCount}
               onViewOrders={() => setPage("orders")}
             />
-          )}
+            /* <>
+
+              <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={addMessage}>messages</button></>
+         */  )}
           {page === "products" && (
             <ProductsPage products={products} setProducts={setProducts} />
           )}
@@ -460,10 +512,13 @@ function ProductsPage({ products, setProducts }: { products: Product[]; setProdu
   function deleteProduct(id: string) {
     setProducts(products.filter(p => p.id !== id));
   }
-  function toggleActive(id: string) {
-    setProducts(products.map(p => p.id === id ? { ...p, active: !p.active } : p));
+  async function toggleActive(id: string) {
+    const product = products.filter(p => p.id === id)
+    const data = product[0]
+    await updateDoc(doc(db, "products", id), { active: !data.active });
+    //setProducts(products.map(p => p.id === id ? { ...p, active: !p.active } : p));
   }
-  function saveProduct(data: Partial<Product>) {
+  function saveProducts(data: Partial<Product>) {
     if (modal === "add") {
       setProducts([...products, { ...data, id: `p${Date.now()}`, rating: 0, reviews: 0, active: true, createdAt: new Date().toISOString().split("T")[0] } as Product]);
     } else if (modal && typeof modal === "object") {
@@ -471,6 +526,19 @@ function ProductsPage({ products, setProducts }: { products: Product[]; setProdu
     }
     setModal(null);
   }
+  async function saveProduct(data: Partial<Product>) {
+    if (modal === "add") {
+      await addDoc(collection(db, "products"), data);
+    } else if (modal && typeof modal === "object") {
+      if (data.id) {
+        await setDoc(doc(db, "products", data.id), data, { merge: true });
+      } else {
+        alert("Product ID is required to update a product.");
+      }
+    }
+    setModal(null);
+  }
+
 
   return (
     <div className="space-y-4">
@@ -568,6 +636,7 @@ function ProductsPage({ products, setProducts }: { products: Product[]; setProdu
 
 function ProductModal({ product, onSave, onClose }: { product: Product | null; onSave: (d: Partial<Product>) => void; onClose: () => void }) {
   const [form, setForm] = useState({
+    id: product?.id ?? "",
     name: product?.name ?? "",
     category: product?.category ?? "Bags",
     price: product?.price ?? 0,
