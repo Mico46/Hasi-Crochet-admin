@@ -11,8 +11,14 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
+
 import { collection, onSnapshot, addDoc, getDocs, updateDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { upload } from '@vercel/blob/client';
+import { PutBlobResult, put } from '@vercel/blob';
+import { Button } from "./components/ui/button";
+
+
 
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -208,10 +214,128 @@ export default function App() {
             <ChatPage messages={messages} setMessages={setMessages} />
           )}
           {page === "settings" && <SettingsPage />}
+          {page === "logout" && <UploadImagesPage />}
         </main>
       </div>
     </div>
   );
+}
+
+function UploadImagesPage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploadedBlob, setUploadedBlob] = useState<PutBlobResult | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const token = "vercel_blob_rw_VT1xwU6xbk4JCePp_Z9vMfxOvxeZooBPQT4xzdK8Av8EWfk";
+  // Handle local browsing and image preview
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
+      setUploadedBlob(null);
+      setStatusMessage('');
+    } else {
+      setStatusMessage('⚠️ Please select a valid image file.');
+    }
+  };
+  // Handle server upload via API
+  const handleUpload = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+
+    if (!fileInputRef.current?.files || fileInputRef.current.files.length === 0) {
+      setStatusMessage('❌ Please select an image first.');
+      return;
+    }
+
+    const file = fileInputRef.current.files[0];
+    setIsUploading(true);
+    setStatusMessage('Uploading directly to Vercel Blob...');
+
+    try {
+      // Direct client upload via the SDK
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        // Points to the authorization endpoint where your BLOB_READ_WRITE_TOKEN is safely used
+        handleUploadUrl: '/api/uploads',
+      });
+
+
+
+
+      setUploadedBlob(newBlob);
+      setStatusMessage('✅ Upload complete!');
+    } catch (error) {
+
+      alert('Vercel Blob Upload error: ' + error);
+      setStatusMessage('❌ Upload failed. Security authorization error.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '450px', margin: '40px auto', fontFamily: 'system-ui, sans-serif' }}>
+      <h3>Vercel Blob Image Upload</h3>
+
+      <form onSubmit={handleUpload}>
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          disabled={isUploading}
+          style={{ marginBottom: '15px', display: 'block', borderWidth: 2 }}
+
+        />
+
+        {previewUrl && !uploadedBlob && (
+          <div style={{ margin: '10px 0' }}>
+            <p style={{ fontSize: '14px', color: '#666' }}>Selected Preview:</p>
+            <img src={previewUrl} alt="Preview" style={{ width: '100%', borderRadius: '6px' }} />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isUploading}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#000',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isUploading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isUploading ? 'Uploading...' : 'Upload File'}
+        </button>
+      </form>
+
+      {statusMessage && <p style={{ marginTop: '15px', fontSize: '14px' }}>{statusMessage}</p>}
+
+      {/* Resulting URL block returned from Vercel */}
+      {uploadedBlob && (
+        <div style={{ marginTop: '20px', padding: '15px', background: '#f4f4f4', borderRadius: '6px' }}>
+          <p style={{ color: 'green', margin: '0 0 10px 0' }}>🎉 Link Generated Successfully!</p>
+          <a
+            href={uploadedBlob.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ wordBreak: 'break-all', color: '#0066cc', fontWeight: 'bold' }}
+          >
+            {uploadedBlob.url}
+          </a>
+        </div>
+      )}
+
+      <Button
+        variant='outline'
+        size="lg"> Click</Button>
+    </div>
+
+  );
+
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
@@ -343,7 +467,7 @@ function DashboardPage({ products, orders, totalRevenue, pendingCount, onViewOrd
   const lowStock = products.filter(p => p.stock > 0 && p.stock < 5).length;
 
   const stats = [
-    { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, sub: "+12% this month", icon: DollarSign, up: true },
+    { label: "Total Revenue", value: `Birr -${totalRevenue.toLocaleString()}`, sub: "+12% this month", icon: DollarSign, up: true },
     { label: "Orders", value: orders.length, sub: `${pendingCount} pending`, icon: ShoppingBag, up: true },
     { label: "Active Products", value: activeProducts, sub: `${lowStock} low stock`, icon: Package, up: false },
     { label: "Customers", value: 142, sub: "+8 this week", icon: Users, up: true },
@@ -466,7 +590,7 @@ function DashboardPage({ products, orders, totalRevenue, pendingCount, onViewOrd
                     <td className="px-5 py-3 font-medium text-xs" style={{ color: "var(--primary)" }}>{o.id}</td>
                     <td className="px-5 py-3 text-xs font-medium" style={{ color: "var(--foreground)" }}>{o.customer}</td>
                     <td className="px-5 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{o.items.length} item{o.items.length !== 1 ? "s" : ""}</td>
-                    <td className="px-5 py-3 text-xs font-semibold" style={{ color: "var(--foreground)" }}>${o.total}</td>
+                    <td className="px-5 py-3 text-xs font-semibold" style={{ color: "var(--foreground)" }}>Birr{o.total}</td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
                         {icon}{label}
