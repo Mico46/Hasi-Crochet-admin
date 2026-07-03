@@ -964,6 +964,7 @@ function ProductModal({ product, onSave, onClose }: { product: Product | null; o
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
 
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
