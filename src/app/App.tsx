@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard, Package, ShoppingBag, MessageCircle, Settings,
@@ -12,7 +13,7 @@ import {
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
 
-import { collection, onSnapshot, addDoc, getDocs, updateDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, getDocs, updateDoc, deleteDoc, doc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { upload } from '@vercel/blob/client';
 import { PutBlobResult, put } from '@vercel/blob';
@@ -46,10 +47,10 @@ interface Order {
   id: string;
   customer: string;
   email: string;
-  items: { name: string; qty: number; price: number }[];
+  items: { color: string, productId: string, productImage: string, productName: string, productPrice: number, quantity: number }[];
   total: number;
   status: OrderStatus;
-  date: string;
+  date: Timestamp;
   address: string;
   phone: string;
 }
@@ -77,14 +78,14 @@ const seedProducts: Product[] = [
   { id: "p8", name: "Colorful Yarn Bundle", category: "Supplies", price: 18, stock: 30, image: "https://images.unsplash.com/photo-1595341595379-cf1cb694ea1f?w=300&h=300&fit=crop&auto=format", colors: ["Autumn", "Ocean", "Garden"], description: "Premium hand-dyed yarn bundle, 5 skeins.", rating: 4.6, reviews: 14, active: true, createdAt: "2026-05-28" },
 ];
 
-const seedOrders: Order[] = [
-  { id: "ORD-2901", customer: "Liya Haile", email: "liya@email.com", items: [{ name: "Chunky Knit Tote Bag", qty: 1, price: 45 }, { name: "Mini Plant Pot Covers", qty: 2, price: 14 }], total: 73, status: "pending", date: "Jul 1, 2026", address: "45 Bole Road, Addis Ababa", phone: "+251 911 234567" },
-  { id: "ORD-2900", customer: "Sara Bekele", email: "sara@email.com", items: [{ name: "Chunky Knit Sweater", qty: 1, price: 120 }], total: 120, status: "processing", date: "Jun 30, 2026", address: "12 Kazanchis Street, Addis Ababa", phone: "+251 912 345678" },
-  { id: "ORD-2899", customer: "Tigist Alemu", email: "tigist@email.com", items: [{ name: "Granny Square Blanket", qty: 1, price: 85 }], total: 85, status: "shipped", date: "Jun 28, 2026", address: "88 Piassa Square, Addis Ababa", phone: "+251 913 456789" },
-  { id: "ORD-2898", customer: "Meron Tadesse", email: "meron@email.com", items: [{ name: "Crochet Flower Bouquet", qty: 2, price: 28 }], total: 56, status: "delivered", date: "Jun 25, 2026", address: "3 Arat Kilo Ave, Addis Ababa", phone: "+251 914 567890" },
-  { id: "ORD-2897", customer: "Hana Girma", email: "hana@email.com", items: [{ name: "Market Basket Bag", qty: 1, price: 52 }, { name: "Colorful Yarn Bundle", qty: 1, price: 18 }], total: 70, status: "delivered", date: "Jun 22, 2026", address: "21 CMC Road, Addis Ababa", phone: "+251 915 678901" },
-  { id: "ORD-2896", customer: "Bethel Wondmu", email: "bethel@email.com", items: [{ name: "Crochet Pink Shoulder Bag", qty: 1, price: 58 }], total: 58, status: "cancelled", date: "Jun 20, 2026", address: "7 Meskel Square, Addis Ababa", phone: "+251 916 789012" },
-];
+/* const seedOrders: Order[] = [
+  { id: "ORD-2901", customer: "Liya Haile", email: "liya@email.com", items: [{ ProductName: "Chunky Knit Tote Bag", qty: 1, price: 45 }, { ProductName: "Mini Plant Pot Covers", qty: 2, price: 14 }], total: 73, status: "pending", date: "Jul 1, 2026", address: "45 Bole Road, Addis Ababa", phone: "+251 911 234567" },
+  { id: "ORD-2900", customer: "Sara Bekele", email: "sara@email.com", items: [{ ProductName: "Chunky Knit Sweater", qty: 1, price: 120 }], total: 120, status: "processing", date: "Jun 30, 2026", address: "12 Kazanchis Street, Addis Ababa", phone: "+251 912 345678" },
+  { id: "ORD-2899", customer: "Tigist Alemu", email: "tigist@email.com", items: [{ ProductName: "Granny Square Blanket", qty: 1, price: 85 }], total: 85, status: "shipped", date: "Jun 28, 2026", address: "88 Piassa Square, Addis Ababa", phone: "+251 913 456789" },
+  { id: "ORD-2898", customer: "Meron Tadesse", email: "meron@email.com", items: [{ ProductName: "Crochet Flower Bouquet", qty: 2, price: 28 }], total: 56, status: "delivered", date: "Jun 25, 2026", address: "3 Arat Kilo Ave, Addis Ababa", phone: "+251 914 567890" },
+  { id: "ORD-2897", customer: "Hana Girma", email: "hana@email.com", items: [{ ProductName: "Market Basket Bag", qty: 1, price: 52 }, { ProductName: "Colorful Yarn Bundle", qty: 1, price: 18 }], total: 70, status: "delivered", date: "Jun 22, 2026", address: "21 CMC Road, Addis Ababa", phone: "+251 915 678901" },
+  { id: "ORD-2896", customer: "Bethel Wondmu", email: "bethel@email.com", items: [{ ProductName: "Crochet Pink Shoulder Bag", qty: 1, price: 58 }], total: 58, status: "cancelled", date: "Jun 20, 2026", address: "7 Meskel Square, Addis Ababa", phone: "+251 916 789012" },
+]; */
 
 const seedMessages: Message[] = [
   { id: "m1", customer: "Liya Haile", avatar: "LH", preview: "Is my order still on time?", unread: 2, time: "10:32 AM", messages: [{ text: "Hi! I placed an order yesterday. Is it still on time?", sender: "customer", time: "10:30 AM" }, { text: "Is my order still on time?", sender: "customer", time: "10:32 AM" }] },
@@ -132,7 +133,7 @@ export default function App() {
       setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
     });
     const ordUnsub = onSnapshot(collection(db, "orders"), snap => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+      setOrders(snap.docs.map(d => ({ ...d.data() } as Order)));
     });
     const msgUnsub = onSnapshot(collection(db, "messages"), snap => {
       setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
@@ -207,6 +208,8 @@ export default function App() {
          */  )}
           {page === "products" && (
             <ProductsPage products={products} setProducts={setProducts} />
+
+
           )}
           {page === "orders" && (
             <OrdersPage orders={orders} setOrders={setOrders} />
@@ -342,6 +345,155 @@ function TopBar({ page, onMenuClick, totalUnread }: { page: Page; onMenuClick: (
       </div>
     </header>
   );
+}
+
+
+
+
+
+function toDate({ timeStamp }: { timeStamp: Timestamp }) {
+
+  const formattedDate = timeStamp.toDate().toDateString();
+
+  return formattedDate;
+}
+
+function DashboardPage2({ products, orders, totalRevenue, pendingCount, onViewOrders }: {
+  products: Product[]; orders: Order[]; totalRevenue: number; pendingCount: number; onViewOrders: () => void;
+}) {
+  const activeProducts = products.filter(p => p.active).length;
+  const lowStock = products.filter(p => p.stock > 0 && p.stock < 5).length;
+
+  const stats = [
+    { label: "Total Revenue", value: `Birr -${totalRevenue.toLocaleString()}`, sub: "+12% this month", icon: DollarSign, up: true },
+    { label: "Orders", value: orders.length, sub: `${pendingCount} pending`, icon: ShoppingBag, up: true },
+    { label: "Active Products", value: activeProducts, sub: `${lowStock} low stock`, icon: Package, up: false },
+    { label: "Customers", value: 142, sub: "+8 this week", icon: Users, up: true },
+  ];
+
+  const recent = orders.slice(0, 5);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map(({ label, value, sub, icon: Icon, up }) => (
+          <div key={label} className="p-4 rounded-2xl" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--secondary)" }}>
+                <Icon size={18} style={{ color: "var(--primary)" }} />
+              </div>
+              <div className="flex items-center gap-1.5" style={{ color: up ? "#22c55e" : "#ef4444" }}>
+                <span className={`text-xs font-bold ${up ? "bg-green-100" : "bg-red-100"} px-1.5 py-0.5 rounded-md`}>{sub}</span>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold" style={{ fontFamily: "'Playfair Display', serif", color: "var(--foreground)" }}>{value}</h3>
+            <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>{label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 p-5 rounded-2xl" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold" style={{ fontFamily: "'Playfair Display', serif", color: "var(--foreground)" }}>
+              Revenue Overview
+            </p>
+            <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--secondary)", color: "var(--muted-foreground)" }}>
+              6 months
+            </span>
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={salesData}>
+              <defs>
+                <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8c4b2f" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#8c4b2f" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
+                labelStyle={{ color: "var(--foreground)" }}
+              />
+              <Area type="monotone" dataKey="sales" stroke="#8c4b2f" strokeWidth={2.5} fill="url(#grad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="p-5 rounded-2xl" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+          <p className="text-sm font-semibold mb-4" style={{ fontFamily: "'Playfair Display', serif", color: "var(--foreground)" }}>
+            Sales by Category
+          </p>
+          <ResponsiveContainer width="100%" height={140}>
+            <PieChart>
+              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">
+                {categoryData.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+              </Pie>
+              <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-1.5 mt-2">
+            {categoryData.map((c) => (
+              <div key={c.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c.color }} />
+                  <span style={{ color: "var(--muted-foreground)" }}>{c.name}</span>
+                </div>
+                <span className="font-medium" style={{ color: "var(--foreground)" }}>{c.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--border)" }}>
+          <p className="text-sm font-semibold" style={{ fontFamily: "'Playfair Display', serif", color: "var(--foreground)" }}>
+            Recent Orders
+          </p>
+          <button
+            onClick={onViewOrders}
+            className="text-xs font-medium flex items-center gap-1"
+            style={{ color: "var(--primary)" }}
+          >
+            View all <ChevronRight size={12} />
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                {["Order", "Customer", "Items", "Total", "Status", "Date"].map((h) => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold" style={{ color: "var(--muted-foreground)" }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((o) => {
+                const { label, bg, text, icon } = statusMeta[o.status];
+                return (
+                  <tr key={o.id} style={{ borderBottom: "1px solid var(--border)" }} className="hover:bg-secondary/30 transition-colors">
+                    <td className="px-5 py-3 font-medium text-xs" style={{ color: "var(--primary)" }}>{o.id}</td>
+                    <td className="px-5 py-3 text-xs font-medium" style={{ color: "var(--foreground)" }}>{o.customer}</td>
+                    <td className="px-5 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{o.items.length} item{o.items.length !== 1 ? "s" : ""}</td>
+                    <td className="px-5 py-3 text-xs font-semibold" style={{ color: "var(--foreground)" }}>Birr {o.total}</td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
+                        {icon}{label}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{toDate({ timeStamp: o.date })}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  )
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -482,7 +634,7 @@ function DashboardPage({ products, orders, totalRevenue, pendingCount, onViewOrd
                         {icon}{label}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{o.date}</td>
+                    <td className="px-5 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{toDate({ timeStamp: o.date })}</td>
                   </tr>
                 );
               })}
@@ -1006,7 +1158,7 @@ function OrdersPage({ orders, setOrders }: { orders: Order[]; setOrders: (o: Ord
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}>{icon}{label}</span>
                       </td>
-                      <td className="px-4 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{o.date}</td>
+                      <td className="px-4 py-3 text-xs" style={{ color: "var(--muted-foreground)" }}>{toDate({ timeStamp: o.date })}</td>
                     </tr>
                   );
                 })}
@@ -1027,7 +1179,7 @@ function OrdersPage({ orders, setOrders }: { orders: Order[]; setOrders: (o: Ord
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-bold" style={{ color: "var(--primary)" }}>{selected.id}</p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>{selected.date}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>{toDate({ timeStamp: selected.date })}</p>
                 </div>
                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusMeta[selected.status].bg} ${statusMeta[selected.status].text}`}>
                   {statusMeta[selected.status].icon}{statusMeta[selected.status].label}
@@ -1046,8 +1198,8 @@ function OrdersPage({ orders, setOrders }: { orders: Order[]; setOrders: (o: Ord
                 <div className="space-y-1.5">
                   {selected.items.map((item, i) => (
                     <div key={i} className="flex justify-between text-xs">
-                      <span style={{ color: "var(--muted-foreground)" }}>{item.name} × {item.qty}</span>
-                      <span className="font-medium" style={{ color: "var(--foreground)" }}>${(item.price * item.qty).toFixed(2)}</span>
+                      <span style={{ color: "var(--muted-foreground)" }}>{item.productName} × {item.quantity}</span>
+                      <span className="font-medium" style={{ color: "var(--foreground)" }}>${(item.productPrice * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between text-sm font-semibold pt-1" style={{ borderTop: "1px solid var(--border)", color: "var(--foreground)" }}>
